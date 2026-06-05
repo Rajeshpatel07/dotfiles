@@ -1,0 +1,96 @@
+
+configuration {
+  show-icons: true;
+  font: "JetBrainsMono Nerd Font 14";
+  display-drun: "Apps:";
+}
+
+@theme "/dev/null"
+
+* {
+  background-color: #000000;
+  text-color: #ffffff;
+  border-color: #000000;
+}
+
+/* Window settings */
+window {
+  width: 38%;
+  height:37%;
+  padding: 10px;
+  border-color: #28C7E0;
+  border:0.08em;
+  border-radius:1px;
+  background-color: #000000;
+}
+
+/* Main container */
+mainbox {
+  orientation: vertical;
+  spacing: 10px;
+}
+
+/* Search input bar */
+inputbar {
+  orientation: horizontal;
+  children: [prompt, entry];
+  padding: 10px;
+  background-color: #111111;
+  border: 1px ;
+  border-radius: 8px;
+}
+
+prompt {
+  text-color: #ffffff;
+  font-size: 16px;
+  padding: 0 8px;
+}
+
+entry {
+  expand: true;
+  background-color: transparent;
+  text-color: #ffffff;
+  placeholder-color: #888888;
+  border: 0;
+}
+
+/* List view */
+listview {
+  layout: vertical;
+  lines: 8;
+  columns: 1;
+  spacing: 4px;
+  scrollbar: false;
+  background-color: #000000;
+  border: 0;
+}
+
+/* Application entry */
+element {
+  orientation: horizontal;
+  padding: 10px;
+  spacing: 12px;
+  border: 0;
+  border-radius: 6px;
+}
+
+element-icon {
+  size: 28px;
+  expand: false;
+}
+
+element-text {
+  expand: true;
+  text-color: #ffffff;
+  vertical-align: 0.5;
+  font-size: 14px;
+}
+
+/* Selected item with gradient */
+element selected {
+  text-color: #ffffff;
+  border-radius: 1px;
+  border-color: #28C7E0;
+  border:1px;
+}
+

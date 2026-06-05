@@ -1,0 +1,45 @@
+font=JetBrainsMono Nerd Font 12
+background-color=#1e1e2e90
+text-color=#cdd6f4
+border-color=#89b4fa
+progress-color=over #89b4fa
+border-size=2
+border-radius=10
+
+icons=1
+max-icon-size=48
+icon-location=left
+
+markup=1
+layer=overlay
+anchor=top-right
+outer-margin=0,0,0,0
+margin=10
+padding=10
+width=300
+height=150
+default-timeout=3000
+ignore-timeout=1
+sort=-time
+max-visible=5
+group-by=app-name
+
+format=<b>%a</b>\n%s\n%b
+
+[grouped=true]
+format=%a (%g)\n%s\n%b
+
+[urgency=low]
+text-color=#a6adc8
+border-color=#a6adc8
+
+[urgency=normal]
+text-color=#cdd6f4
+border-color=#89b4fa
+
+[urgency=high]
+text-color=#f38ba8
+border-color=#f38ba8
+
+default-timeout=0
+
