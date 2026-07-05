@@ -15,7 +15,37 @@ sudo dnf copr enable -y lionheartp/Hyprland
 
 print_step "Installing Core Packages"
 # Added -y to automate the installation without asking for confirmation
-sudo dnf install -y hyprland hyprlock waybar kitty mako rofi
+sudo dnf install -y hyprland hyprlock waybar kitty mako rofi nemo
+
+# ==============================================================================
+# NEW CONFIGURATION: GO & RUST BINARY INSTALLATIONS
+# ==============================================================================
+print_step "Checking for Go & Installing bluetuith"
+if command -v go >/dev/null 2>&1; then
+    if [ -f "$HOME/go/bin/bluetuith" ]; then
+        echo "--> bluetuith is already installed in ~/go/bin. Skipping."
+    else
+        echo "--> Go compiler found. Installing bluetuith globally..."
+        go install github.com/darkhz/bluetuith@latest
+        echo "--> bluetuith successfully installed!"
+    fi
+else
+    echo -e "\033[1;33m[Warning]\033[0m Go compiler not found on system. Skipping bluetuith installation.\033[0m"
+fi
+
+print_step "Checking for Cargo & Installing wiremix"
+if command -v cargo >/dev/null 2>&1; then
+    if [ -f "$HOME/.cargo/bin/wiremix" ]; then
+        echo "--> wiremix is already installed in ~/.cargo/bin. Skipping."
+    else
+        echo "--> Cargo found. Installing wiremix..."
+        cargo install wiremix
+        echo "--> wiremix successfully installed!"
+    fi
+else
+    echo -e "\033[1;33m[Warning]\033[0m Cargo (Rust) not found on system. Skipping wiremix installation.\033[0m"
+fi
+# ==============================================================================
 
 print_step "Copying Dotfiles to ~/.config"
 mkdir -p ~/.config
@@ -78,6 +108,7 @@ if [[ "$use_wallpaper" =~ ^[Yy]$ ]]; then
     # Check if the file exists
     if [ -f "$wallpaper_path" ]; then
         echo "--> Copying wallpaper to system directory..."
+        sudo mkdir -p /usr/share/hypr
         sudo cp "$wallpaper_path" /usr/share/hypr/wall0.png
         echo "--> Wallpaper successfully applied!"
         echo -e "\033[1;33m[Warning] This wallpaper change is only temporary and will be removed if you upgrade hyprland.\033[0m"
@@ -88,9 +119,6 @@ else
     echo "--> Skipping custom wallpaper setup."
 fi
 
-# ==============================================================================
-# NEW CONFIGURATION: SYSTEM MEMORY OPTIMIZATION PROMPT
-# ==============================================================================
 print_step "System Memory Optimization"
 echo -ne "\033[1;35mWant to optimize memory usage on the system? (y/n): \033[0m"
 read -r optimize_mem
@@ -107,7 +135,6 @@ if [[ "$optimize_mem" =~ ^[Yy]$ ]]; then
 else
     echo "--> Skipping memory optimization."
 fi
-# ==============================================================================
 
 echo -e "\n\033[1;32m========================================\033[0m"
 echo -e "\033[1;32m[✓] Workspace Setup Successfully Completed!\033[0m"
