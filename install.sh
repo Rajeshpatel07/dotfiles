@@ -63,6 +63,52 @@ echo "--> Cloning kickstart.nvim repository..."
 rm -rf "$NVIM_DIR" # Failsafe clean
 git clone https://github.com/Rajeshpatel07/kickstart.nvim.git "$NVIM_DIR"
 
+print_step "Custom Wallpaper Setup"
+echo -ne "\033[1;35mDo you want to use a custom wallpaper as your background? (y/n): \033[0m"
+read -r use_wallpaper
+
+if [[ "$use_wallpaper" =~ ^[Yy]$ ]]; then
+    echo -e "\n\033[1;36mEnter the file path to your image:\033[0m"
+    echo -ne "Placeholder/Example: [ \033[1;37m~/Downloads/bg.jpg\033[0m ]\n--> "
+    read -r wallpaper_path
+
+    # Expand tilde (~) manually if the user uses it in their input path
+    wallpaper_path="${wallpaper_path/#\~/$HOME}"
+
+    # Check if the file exists
+    if [ -f "$wallpaper_path" ]; then
+        echo "--> Copying wallpaper to system directory..."
+        sudo cp "$wallpaper_path" /usr/share/hypr/wall0.png
+        echo "--> Wallpaper successfully applied!"
+        echo -e "\033[1;33m[Warning] This wallpaper change is only temporary and will be removed if you upgrade hyprland.\033[0m"
+    else
+        echo -e "\033[1;31m[Error] Target file '$wallpaper_path' does not exist. Skipping wallpaper configuration.\033[0m"
+    fi
+else
+    echo "--> Skipping custom wallpaper setup."
+fi
+
+# ==============================================================================
+# NEW CONFIGURATION: SYSTEM MEMORY OPTIMIZATION PROMPT
+# ==============================================================================
+print_step "System Memory Optimization"
+echo -ne "\033[1;35mWant to optimize memory usage on the system? (y/n): \033[0m"
+read -r optimize_mem
+
+if [[ "$optimize_mem" =~ ^[Yy]$ ]]; then
+    # Look for the optimization script in the current folder
+    if [ -f "./optimize_services.sh" ]; then
+        echo "--> Found memory optimization script. Launching..."
+        chmod +x ./optimize_services.sh
+        ./optimize_services.sh
+    else
+        echo -e "\033[1;31m[Error] 'optimize_services.sh' not found in the current folder. Skipping.\033[0m"
+    fi
+else
+    echo "--> Skipping memory optimization."
+fi
+# ==============================================================================
+
 echo -e "\n\033[1;32m========================================\033[0m"
 echo -e "\033[1;32m[✓] Workspace Setup Successfully Completed!\033[0m"
 echo -e "\033[1;32m========================================\033[0m\n"

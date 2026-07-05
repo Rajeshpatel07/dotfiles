@@ -1,5 +1,3 @@
--- ~/.config/hypr/hyprland.lua
-
 -- Monitor Configuration
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 
@@ -10,7 +8,7 @@ end)
 
 -- Variables
 local terminal = "kitty tmux"
-local fileManager = "thunar"
+local fileManager = "nemo"
 local menu = "rofi -show drun"
 local mainMod = "SUPER"
 
@@ -21,6 +19,12 @@ hl.env("GTK_THEME", "Adwaita:dark")
 
 -- Main Configuration Options
 hl.config({
+	-- xwayland = {
+	-- 	enabled = false,
+	-- },
+	render = {
+		use_fp16 = false,
+	},
 	input = {
 		kb_layout = "us",
 		kb_variant = "",
@@ -37,7 +41,7 @@ hl.config({
 	general = {
 		gaps_in = 1,
 		gaps_out = 0,
-		border_size = 2,
+		border_size = 1,
 		col = {
 			-- In Lua, gradients are defined using a colors table and an angle property
 			active_border = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
@@ -77,7 +81,8 @@ hl.config({
 	misc = {
 		force_default_wallpaper = 0,
 		disable_splash_rendering = true,
-		render_unfocused_fps = 10,
+		render_unfocused_fps = 1,
+		initial_workspace_tracking = 0,
 	},
 })
 
@@ -90,7 +95,7 @@ hl.device({
 -- Window Rules
 hl.window_rule({
 	name = "utils",
-	match = { class = "^(blueman-manager|wiremix|org.gnome.Calendar)$" },
+	match = { class = "^(bluetuith|wiremix|org.gnome.Calendar)$" },
 	float = true,
 	size = { 840, 500 },
 	center = true,
@@ -101,14 +106,13 @@ hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen())
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/scripts/screen.sh"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(menu))
-hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("gnome-clocks"))
-hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("~/Downloads/apps/helium/helium.AppImage"))
+hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("helium", { workspace = "2" }))
 
 -- Apps to Launch on Specific Workspaces
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave-browser", { workspace = "2" }))
@@ -180,7 +184,5 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), { re
 -- Screenshot
 hl.bind(
 	"Print",
-	hl.dsp.exec_cmd(
-		'sh -c \'path=~/Pictures/Screenshots/screenshot_$(date +%Y-%m-%d_%H-%M-%S).png; grim -g "$(slurp)" "$path" && notify-send -t 3000 --app-name="Screenshot" --icon="$path" "Screenshot taken" "$(basename "$path")"\''
-	)
+	hl.dsp.exec_cmd([[sh -c 'path=~/Pictures/Screenshots/screenshot_$(date +%Y-%m-%d_%H-%M-%S).png; grim -g "$(slurp)" "$path" && wl-copy < "$path" && notify-send -t 3000 --app-name="Screenshot" --icon="$path" "Screenshot taken" "$(basename "$path")"']])
 )

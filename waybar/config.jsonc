@@ -1,10 +1,7 @@
 {
-  "layer": "top", // Waybar at top layer
-  "position": "top", // Waybar position (top|bottom|left|right)
-  "height": 10, // Waybar height (to be removed for auto height)
-  // "width": 1910, // Waybar width
-  // "spacing": 4, // Gaps between modules (4px)
-  // Choose the order of the modules
+  "layer": "top", 
+  "position": "top", 
+  "height": 10, 
   "modules-left": ["hyprland/workspaces", "tray"],
   "modules-center": ["hyprland/window"],
   "modules-right": [
@@ -27,9 +24,6 @@
       "3": "󰨜 ",
       "4": " ",
       "5": " "
-      //         "urgent": "",
-      //         "focused": "",
-      //         "default": ""
     },
     "persistent-workspaces": {
       "1": [],
@@ -39,54 +33,12 @@
       "5": []
     }
   },
-  "keyboard-state": {
-    "numlock": true,
-    "capslock": true,
-    "format": "{name} {icon}",
-    "format-icons": {
-      "locked": "",
-      "unlocked": ""
-    }
-  },
   "hyprland/language": {
     "format": "{short}",
     "tooltip-format": "{long}"
   },
   "sway/mode": {
     "format": "<span style=\"italic\">{}</span>"
-  },
-  "sway/scratchpad": {
-    "format": "{icon} {count}",
-    "show-empty": false,
-    "format-icons": ["", ""],
-    "tooltip": true,
-    "tooltip-format": "{app}: {title}"
-  },
-  "mpd": {
-    "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ⸨{songPosition}|{queueLength}⸩ {volume}% ",
-    "format-disconnected": "Disconnected ",
-    "format-stopped": "{consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Stopped ",
-    "unknown-tag": "N/A",
-    "interval": 2,
-    "consume-icons": {
-      "on": " "
-    },
-    "random-icons": {
-      "off": "<span color=\"#f53c3c\"></span> ",
-      "on": " "
-    },
-    "repeat-icons": {
-      "on": " "
-    },
-    "single-icons": {
-      "on": "1 "
-    },
-    "state-icons": {
-      "paused": "",
-      "playing": ""
-    },
-    "tooltip-format": "MPD (connected)",
-    "tooltip-format-disconnected": "MPD (disconnected)"
   },
   "idle_inhibitor": {
     "format": "{icon}",
@@ -96,7 +48,6 @@
     }
   },
   "tray": {
-    //"icon-size": 21,
     "spacing": 10
   },
 
@@ -115,18 +66,7 @@
       }
     }
   },
-
-  "cpu": {
-    "format": "{usage}% ",
-    "interval": 2,
-    "tooltip": true
-  },
-  "memory": {
-    "format": "{}% 󰍛 ",
-    "interval": 2
-  },
   "temperature": {
-    // "thermal-zone": 2,
     "hwmon-path": "/sys/class/hwmon/hwmon1/temp7_input",
     "critical-threshold": 90,
     "format-critical": "{temperatureC}°C {icon}",
@@ -135,7 +75,6 @@
     "interval": 2
   },
   "backlight": {
-    // "device": "acpi_video1",
     "format": "{percent}% {icon}",
     "format-icons": ["", ""]
   },
@@ -145,7 +84,6 @@
       "warning": 30,
       "critical": 20
     },
-    // "adapter": "/sys/class/power_supply/hid-dc:2c:26:26:48:e8-battery",
     "format": "{capacity}% {icon} ",
     "format-charging": "{capacity}% ",
     "format-plugged": "{capacity}% ",
@@ -170,7 +108,7 @@
     "format-disabled": "󰂲 disabled",
     "format-connected": " connected",
     "tooltip-format": "Devices connected: {num_connections}",
-    "on-click": "blueman-manager"
+    "on-click": "kitty --class=bluetuith -e bluetuith"
   },
   "pulseaudio": {
     "scroll-step": 5, // %, can be a float
@@ -190,13 +128,11 @@
       "default": ["", "", " "]
     },
     "escape": true
-    // "exec": "$HOME/.config/waybar/mediaplayer.py 2> /dev/null" // Script in resources folder
-    // "exec": "$HOME/.config/waybar/mediaplayer.py --player spotify 2> /dev/null" // Filter player based on name
   },
   "custom/power": {
-    "format": "󰐥", // Added label for visibility
-    "on-click": "wlogout", // Command to logout or shutdown
-    "tooltip-format": "Power Menu" // Tooltip for additional info
+    "format": "󰐥", 
+    "on-click": "wlogout", 
+    "tooltip-format": "Power Menu" 
   },
   "mpris": {
     "format": "{player_icon} {title}",
