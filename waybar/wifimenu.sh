@@ -21,7 +21,7 @@ success=false
 
 # Check if a connection profile for this SSID already exists.
 if nmcli -g NAME connection show | grep -wq "$SSID"; then
-    notify-send "Connecting..." "Using saved profile for '$SSID'"
+    notify-send "Connecting..." "$SSID"
     connection_output=$(nmcli connection up "$SSID" 2>&1)
 
     if [ $? -eq 0 ]; then
@@ -50,7 +50,7 @@ fi
 
 # Final status notification based on the outcome.
 if [ "$success" = true ]; then
-    notify-send -t 3000 "Connection Successful" "You are now connected to '$SSID'"
+    notify-send -t 3000 "Connection Successful" "$SSID"
 else
-    notify-send -t 3000 -u critical "Connection Failed" "Could not connect to '$SSID'"
+    notify-send -t 3000 -u critical "Connection Failed" "$SSID"
 fi
