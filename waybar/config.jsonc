@@ -5,7 +5,7 @@
   "modules-left": ["hyprland/workspaces", "tray"],
   "modules-center": ["hyprland/window"],
   "modules-right": [
-    "temperature",
+    "custom/gamemode",
     "network",
     "bluetooth",
     "pulseaudio",
@@ -129,6 +129,16 @@
     },
     "escape": true
   },
+  "custom/gamemode": {
+    "exec": "~/.config/waybar/game-mode.sh",
+    "return-type": "json",
+    "interval": 5,
+    "format": "{text}",
+    "tooltip": true,
+    "on-click": "~/.config/waybar/game-mode.sh toggle",
+    "signal": 8,
+    "exec-on-event": false
+  },
   "custom/power": {
     "format": "󰐥", 
     "on-click": "wlogout", 
@@ -149,6 +159,5 @@
       "zen":""
     }
   }
-}
 }
 

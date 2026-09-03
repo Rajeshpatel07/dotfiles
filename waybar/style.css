@@ -76,6 +76,7 @@ window#waybar.solo {
 #memory,
 #disk,
 #temperature,
+#custom-gamemode,
 #backlight,
 #network,
 #pulseaudio,
@@ -226,6 +227,21 @@ label:focus {
 #temperature.critical {
     background-color: #ff5555;
     color: #282a36;
+}
+
+#custom-gamemode {
+    border-bottom: solid 1px #ff79c6;
+    color: #ff79c6;
+}
+
+#custom-gamemode.on {
+    border-bottom: solid 1px #ff79c6;
+    color: #ff79c6;
+}
+
+#custom-gamemode.off {
+    border-bottom: solid 1px #ff79c6;
+    color: #ff79c6;
 }
 
 #tray {
