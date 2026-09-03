@@ -1,148 +1,223 @@
 #!/bin/bash
+set -euo pipefail
 
-# Exit immediately if a command exits with a non-zero status
-set -e
+# ------------------------------------------------------------------------------
+# dotfiles installer — minimal, explicit, confirm-before-every-change
+# ------------------------------------------------------------------------------
 
-# Helper function to print colorful, visible step headers
-print_step() {
-    echo -e "\n\033[1;34m========================================\033[0m"
-    echo -e "\033[1;36m[*] $1...\033[0m"
-    echo -e "\033[1;34m========================================\033[0m"
+# -- colors (auto-disable if not a tty) ---------------------------------------
+if [[ -t 1 ]]; then
+    RESET='\033[0m'
+    BOLD='\033[1m'
+    DIM='\033[2m'
+    BLUE='\033[1;34m'
+    CYAN='\033[1;36m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    RED='\033[1;31m'
+    MAGENTA='\033[1;35m'
+else
+    RESET=''; BOLD=''; DIM=''; BLUE=''; CYAN=''; GREEN=''; YELLOW=''; RED=''; MAGENTA=''
+fi
+
+# -- helpers ------------------------------------------------------------------
+step()  { echo -e "\n${BLUE}━━ ${BOLD}$1${RESET}"; }
+info()  { echo -e "  ${DIM}→${RESET} $1"; }
+ok()    { echo -e "  ${GREEN}✓${RESET} $1"; }
+warn()  { echo -e "  ${YELLOW}!${RESET} $1"; }
+err()   { echo -e "  ${RED}✗${RESET} $1"; }
+skip()  { echo -e "  ${DIM}— skipped${RESET}"; }
+
+# ask <question> -> returns 0 on y/Y, 1 otherwise. Default is N.
+ask() {
+    local prompt="$1"
+    echo -ne "  ${MAGENTA}?${RESET} ${prompt} ${DIM}[y/N]${RESET} "
+    read -r reply || true
+    [[ "$reply" =~ ^[Yy]$ ]]
 }
 
-print_step "Enabling Hyprland COPR Repository"
-sudo dnf copr enable -y lionheartp/Hyprland
-
-print_step "Installing Core Packages"
-# Added -y to automate the installation without asking for confirmation
-sudo dnf install -y hyprland hyprlock waybar kitty mako rofi nemo
-
-# ==============================================================================
-# NEW CONFIGURATION: GO & RUST BINARY INSTALLATIONS
-# ==============================================================================
-print_step "Checking for Go & Installing bluetuith"
-if command -v go >/dev/null 2>&1; then
-    if [ -f "$HOME/go/bin/bluetuith" ]; then
-        echo "--> bluetuith is already installed in ~/go/bin. Skipping."
-    else
-        echo "--> Go compiler found. Installing bluetuith globally..."
-        go install github.com/darkhz/bluetuith@latest
-        echo "--> bluetuith successfully installed!"
-    fi
-else
-    echo -e "\033[1;33m[Warning]\033[0m Go compiler not found on system. Skipping bluetuith installation.\033[0m"
-fi
-
-print_step "Checking for Cargo & Installing wiremix"
-if command -v cargo >/dev/null 2>&1; then
-    if [ -f "$HOME/.cargo/bin/wiremix" ]; then
-        echo "--> wiremix is already installed in ~/.cargo/bin. Skipping."
-    else
-        echo "--> Cargo found. Installing wiremix..."
-        cargo install wiremix
-        echo "--> wiremix successfully installed!"
-    fi
-else
-    echo -e "\033[1;33m[Warning]\033[0m Cargo (Rust) not found on system. Skipping wiremix installation.\033[0m"
-fi
-# ==============================================================================
-
-print_step "Copying Dotfiles to ~/.config"
-mkdir -p ~/.config
-# Loop through the directories to copy
-for dir in hypr waybar kitty rofi mako; do
-    if [ -d "$dir" ]; then
-        echo "--> Replacing existing config for $dir..."
-        rm -rf ~/.config/"$dir"
-        cp -r "$dir" ~/.config/
-        echo "--> Successfully copied $dir/"
-    else
-        echo -e "\033[1;33m[Warning]\033[0m Directory '$dir/' not found in current folder. Skipping."
-    fi
-done
-
-print_step "Setting up Tmux Configuration"
-if [ -f "tmux/.tmux.conf" ]; then
-    cp "tmux/.tmux.conf" ~/
-    echo "--> Copied .tmux.conf to home directory"
-else
-    echo -e "\033[1;33m[Warning]\033[0m File 'tmux/.tmux.conf' not found. Skipping."
-fi
-
-print_step "Installing Tmux Plugin Manager (TPM)"
-if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-else
-    echo "--> TPM is already installed."
-fi
-
-print_step "Backing up and Setting up Neovim"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CORE_PKGS=(hyprland hyprlock waybar kitty mako rofi nemo)
+DOT_DIRS=(hypr waybar kitty rofi mako)
 NVIM_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
-NVIM_BAK="$HOME/.config/nvim.bak"
+NVIM_BAK="${HOME}/.config/nvim.bak"
 
-# Create a backup of the existing Neovim configuration
-if [ -d "$NVIM_DIR" ]; then
-    echo "--> Found existing Neovim config. Backing it up to ~/nvim.bak"
-    rm -rf "$NVIM_BAK"
-    mv "$NVIM_DIR" "$NVIM_BAK"
-else
-    echo "--> No existing Neovim config found. Skipping backup."
+# -- pre-flight ---------------------------------------------------------------
+if ! command -v dnf &>/dev/null; then
+    err "dnf not found — this installer targets Fedora."
+    exit 1
 fi
 
-echo "--> Cloning kickstart.nvim repository..."
-rm -rf "$NVIM_DIR" # Failsafe clean
-git clone https://github.com/Rajeshpatel07/kickstart.nvim.git "$NVIM_DIR"
+# ==============================================================================
+# 1. Hyprland COPR
+# ==============================================================================
+step "1/9  Hyprland COPR"
 
-print_step "Custom Wallpaper Setup"
-echo -ne "\033[1;35mDo you want to use a custom wallpaper as your background? (y/n): \033[0m"
-read -r use_wallpaper
+if ask "Enable COPR repo ${BOLD}lionheartp/Hyprland${RESET}?"; then
+    sudo dnf copr enable -y lionheartp/Hyprland
+    ok "COPR enabled"
+else
+    skip
+fi
 
-if [[ "$use_wallpaper" =~ ^[Yy]$ ]]; then
-    echo -e "\n\033[1;36mEnter the file path to your image:\033[0m"
-    echo -ne "Placeholder/Example: [ \033[1;37m~/Downloads/bg.jpg\033[0m ]\n--> "
-    read -r wallpaper_path
+# ==============================================================================
+# 2. Core packages
+# ==============================================================================
+step "2/9  Core packages"
 
-    # Expand tilde (~) manually if the user uses it in their input path
+info "Packages: ${CYAN}${CORE_PKGS[*]}${RESET}"
+if ask "Install core packages via dnf?"; then
+    sudo dnf install -y "${CORE_PKGS[@]}"
+    ok "Core packages installed"
+else
+    skip
+fi
+
+# ==============================================================================
+# 3. bluetuith (Go)
+# ==============================================================================
+step "3/9  bluetuith  ${DIM}(Go — Bluetooth TUI)${RESET}"
+
+if ! command -v go &>/dev/null; then
+    warn "Go not found — skipping"
+elif [[ -f "$HOME/go/bin/bluetuith" ]]; then
+    ok "bluetuith already installed — skipping"
+else
+    if ask "Install bluetuith?"; then
+        go install github.com/darkhz/bluetuith@latest
+        ok "bluetuith installed"
+    else
+        skip
+    fi
+fi
+
+# ==============================================================================
+# 4. wiremix (Rust)
+# ==============================================================================
+step "4/9  wiremix  ${DIM}(Cargo — audio mixer)${RESET}"
+
+if ! command -v cargo &>/dev/null; then
+    warn "Cargo not found — skipping"
+elif [[ -f "$HOME/.cargo/bin/wiremix" ]]; then
+    ok "wiremix already installed — skipping"
+else
+    if ask "Install wiremix?"; then
+        cargo install wiremix
+        ok "wiremix installed"
+    else
+        skip
+    fi
+fi
+
+# ==============================================================================
+# 5. Dotfiles → ~/.config
+# ==============================================================================
+step "5/9  Dotfiles"
+
+if ask "Deploy dotfiles to ~/.config?"; then
+    mkdir -p "$HOME/.config"
+    for dir in "${DOT_DIRS[@]}"; do
+        if [[ -d "$SCRIPT_DIR/$dir" ]]; then
+            rm -rf "$HOME/.config/$dir"
+            cp -r "$SCRIPT_DIR/$dir" "$HOME/.config/"
+            ok "deployed $dir"
+        else
+            warn "$dir not found — skipping"
+        fi
+    done
+else
+    skip
+fi
+
+# ==============================================================================
+# 6. Tmux config
+# ==============================================================================
+step "6/9  Tmux"
+
+if [[ ! -f "$SCRIPT_DIR/tmux/.tmux.conf" ]]; then
+    warn "tmux config not found — skipping"
+elif ask "Copy tmux config to ~/.tmux.conf?"; then
+    cp "$SCRIPT_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
+    ok "tmux config copied"
+else
+    skip
+fi
+
+# ==============================================================================
+# 7. TPM (Tmux Plugin Manager)
+# ==============================================================================
+step "7/9  TPM"
+
+if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
+    ok "TPM already installed — skipping"
+elif ask "Install TPM (Tmux Plugin Manager)?"; then
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    ok "TPM installed"
+else
+    skip
+fi
+
+# ==============================================================================
+# 8. Neovim (kickstart.nvim)
+# ==============================================================================
+step "8/9  Neovim"
+
+if [[ -d "$NVIM_DIR" ]]; then
+    warn "Existing nvim config will be backed up"
+fi
+
+if ask "Set up Neovim?"; then
+    if [[ -d "$NVIM_DIR" ]]; then
+        rm -rf "$NVIM_BAK"
+        mv "$NVIM_DIR" "$NVIM_BAK"
+        ok "backup saved"
+    fi
+    rm -rf "$NVIM_DIR"
+    git clone https://github.com/Rajeshpatel07/kickstart.nvim.git "$NVIM_DIR"
+    ok "Neovim ready"
+else
+    skip
+fi
+
+# ==============================================================================
+# 9. Extras
+# ==============================================================================
+
+# -- Wallpaper ----------------------------------------------------------------
+step "9a/9  Wallpaper  ${DIM}(optional)${RESET}"
+
+if ask "Set a custom wallpaper?"; then
+    echo -ne "  ${DIM}Path: ${RESET}"
+    read -r wallpaper_path || true
     wallpaper_path="${wallpaper_path/#\~/$HOME}"
-
-    # Check if the file exists
-    if [ -f "$wallpaper_path" ]; then
-        echo "--> Copying wallpaper to system directory..."
+    if [[ -z "$wallpaper_path" ]]; then
+        warn "No path entered — skipping"
+    elif [[ -f "$wallpaper_path" ]]; then
         sudo mkdir -p /usr/share/hypr
         sudo cp "$wallpaper_path" /usr/share/hypr/wall0.png
-        echo "--> Wallpaper successfully applied!"
-        echo -e "\033[1;33m[Warning] This wallpaper change is only temporary and will be removed if you upgrade hyprland.\033[0m"
+        ok "wallpaper set"
     else
-        echo -e "\033[1;31m[Error] Target file '$wallpaper_path' does not exist. Skipping wallpaper configuration.\033[0m"
+        err "File not found — skipping"
     fi
 else
-    echo "--> Skipping custom wallpaper setup."
+    skip
 fi
 
-print_step "System Memory Optimization"
-echo -ne "\033[1;35mWant to optimize memory usage on the system? (y/n): \033[0m"
-read -r optimize_mem
+# -- Memory optimization ------------------------------------------------------
+step "9b/9  Memory optimization  ${DIM}(optional)${RESET}"
 
-if [[ "$optimize_mem" =~ ^[Yy]$ ]]; then
-    # Look for the optimization script in the current folder
-    if [ -f "./optimize_services.sh" ]; then
-        echo "--> Found memory optimization script. Launching..."
-        chmod +x ./optimize_services.sh
-        ./optimize_services.sh
+if ask "Optimize system services?"; then
+    if [[ -f "$SCRIPT_DIR/optimize_services.sh" ]]; then
+        chmod +x "$SCRIPT_DIR/optimize_services.sh"
+        "$SCRIPT_DIR/optimize_services.sh"
     else
-        echo -e "\033[1;31m[Error] 'optimize_services.sh' not found in the current folder. Skipping.\033[0m"
+        err "optimizer not found — skipping"
     fi
 else
-    echo "--> Skipping memory optimization."
+    skip
 fi
 
-echo -e "\n\033[1;32m========================================\033[0m"
-echo -e "\033[1;32m[✓] Workspace Setup Successfully Completed!\033[0m"
-echo -e "\033[1;32m========================================\033[0m\n"
-
-# Final Reboot Message
-echo -e "\033[1;31m=================================================================\033[0m"
-echo -e "\033[1;31m  ATTENTION: PLEASE REBOOT YOUR SYSTEM NOW\033[0m"
-echo -e "\033[1;31m=================================================================\033[0m"
-
-echo -e "You can reboot by typing: \033[1;37msudo reboot\033[0m\n"
+# -- Done ---------------------------------------------------------------------
+echo -e "\n${GREEN}━━ ${BOLD}Done${RESET} ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+ok "Setup complete"
+echo -e "  Reboot to apply changes: ${BOLD}sudo reboot${RESET}"

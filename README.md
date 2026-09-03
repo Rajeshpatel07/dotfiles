@@ -51,7 +51,6 @@ chmod +x install.sh
 | `super` + `space`      | 🚀 Open app launcher `(rofi)`             |
 | `super` + `b`          | 🦁 Open Brave in workspace            |
 | `super` + `q`          | 🖥️ Open Kitty terminal                  |
-| `super` + `y`          | 💬 Open Yaak in workspace             |
 | `super` + `c`          | ❌ Close current application             |
 | `super` + `m`          | 🔒 Logout from Hyprland                 |
 | `super` + `v`          | 🪟 Toggle floating window mode           |
@@ -77,8 +76,8 @@ chmod +x install.sh
 
 | Keybind                    | Action                                     |
 | :------------------------- | :----------------------------------------- |
-| `super` + `Shift` + `f`    | 🖥️⛶ Make app fullscreen                    |
-| `super` + `Shift` + `b`    | 🆕 Relaunch Waybar                         |
+| `super` + `f`    | 🖥️⛶ Make app fullscreen                    |
+| `super` + `w`    | 🆕 Toggle Waybar                         |
 | `super` + `1-9`            | 🔢 Switch to workspace 1–9                 |
 | `super` + `Shift` + `1-9`  | 📦 Move current app to workspace 1–9       |
 | `super` + `Shift` + `s`    | 🌟 Move app to special workspace           |

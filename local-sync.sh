@@ -1,41 +1,107 @@
 #!/bin/bash
+set -euo pipefail
 
-# Exit immediately if a command exits with a non-zero status
-set -e
+# ------------------------------------------------------------------------------
+# local-sync — pull live configs from ~/.config back into this repo
+# Every overwrite is confirmed first.
+# ------------------------------------------------------------------------------
 
-# Helper function to print colorful, visible step headers
-print_step() {
-    echo -e "\n\033[1;35m========================================\033[0m"
-    echo -e "\033[1;36m[*] $1...\033[0m"
-    echo -e "\033[1;35m========================================\033[0m"
-}
-
-print_step "Syncing Config Directories from ~/.config to ./"
-# Loop through the directories to copy back to the local repository
-for dir in hypr waybar kitty rofi mako; do
-    if [ -d "$HOME/.config/$dir" ]; then
-        # Remove the local folder so deleted files don't stick around
-        rm -rf "./$dir"
-        # Copy the live folder to the current directory
-        cp -r "$HOME/.config/$dir" "./"
-        echo "--> Successfully updated local $dir/"
-    else
-        echo -e "\033[1;33m[Warning]\033[0m Directory '$HOME/.config/$dir' not found on system. Skipping."
-    fi
-done
-
-print_step "Syncing Tmux Configuration"
-if [ -f "$HOME/.tmux.conf" ]; then
-    # Ensure the local tmux directory exists just in case
-    mkdir -p ./tmux
-    # Copy the live tmux file into the local tmux folder
-    cp "$HOME/.tmux.conf" "./tmux/.tmux.conf"
-    echo "--> Successfully updated local tmux/.tmux.conf"
+if [[ -t 1 ]]; then
+    RESET='\033[0m'
+    BOLD='\033[1m'
+    DIM='\033[2m'
+    BLUE='\033[1;34m'
+    CYAN='\033[1;36m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    RED='\033[1;31m'
+    MAGENTA='\033[1;35m'
 else
-    echo -e "\033[1;33m[Warning]\033[0m File '$HOME/.tmux.conf' not found on system. Skipping."
+    RESET=''; BOLD=''; DIM=''; BLUE=''; CYAN=''; GREEN=''; YELLOW=''; RED=''; MAGENTA=''
 fi
 
-echo -e "\n\033[1;32m========================================\033[0m"
-echo -e "\033[1;32m[✓] Local Dotfiles Successfully Synced!\033[0m"
-echo -e "\033[1;32m========================================\033[0m\n"
+step() { echo -e "\n${BLUE}━━ ${BOLD}$1${RESET}"; }
+info() { echo -e "  ${DIM}→${RESET} $1"; }
+ok()   { echo -e "  ${GREEN}✓${RESET} $1"; }
+warn() { echo -e "  ${YELLOW}!${RESET} $1"; }
+err()  { echo -e "  ${RED}✗${RESET} $1"; }
+skip() { echo -e "  ${DIM}— skipped${RESET}"; }
 
+ask() {
+    local prompt="$1"
+    echo -ne "  ${MAGENTA}?${RESET} ${prompt} ${DIM}[y/N]${RESET} "
+    read -r reply || true
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIRS=(hypr waybar kitty rofi mako)
+
+echo -e "${BOLD}local-sync${RESET}"
+
+# preview
+for d in "${DIRS[@]}"; do
+    if [[ -d "$HOME/.config/$d" ]]; then
+        echo -e "    ${CYAN}$d${RESET}"
+    else
+        echo -e "    ${DIM}$d  (not found — skipping)${RESET}"
+    fi
+done
+if [[ -f "$HOME/.tmux.conf" ]]; then
+    echo -e "    ${CYAN}tmux${RESET}"
+else
+    echo -e "    ${DIM}tmux  (not found — skipping)${RESET}"
+fi
+
+echo ""
+if ! ask "Sync configs from ~/.config?"; then
+    info "Aborted."
+    exit 0
+fi
+
+# ------------------------------------------------------------------------------
+# 1. Config dirs
+# ------------------------------------------------------------------------------
+step "1/2  Config directories"
+
+for dir in "${DIRS[@]}"; do
+    src="$HOME/.config/$dir"
+    dst="$SCRIPT_DIR/$dir"
+
+    if [[ ! -d "$src" ]]; then
+        warn "$dir not found — skipping"
+        continue
+    fi
+
+    rm -rf "$dst"
+    cp -r "$src" "$dst"
+    ok "updated $dir"
+done
+
+# ------------------------------------------------------------------------------
+# 2. Tmux
+# ------------------------------------------------------------------------------
+step "2/2  Tmux"
+
+if [[ ! -f "$HOME/.tmux.conf" ]]; then
+    warn "tmux not found — skipping"
+else
+    if ask "Sync tmux config?"; then
+        mkdir -p "$SCRIPT_DIR/tmux"
+        cp "$HOME/.tmux.conf" "$SCRIPT_DIR/tmux/.tmux.conf"
+        ok "updated tmux"
+    else
+        skip
+    fi
+fi
+
+# ------------------------------------------------------------------------------
+# Done — show what changed
+# ------------------------------------------------------------------------------
+echo -e "\n${GREEN}━━ ${BOLD}Done${RESET} ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+ok "Sync complete"
+
+if command -v git &>/dev/null && [[ -d "$SCRIPT_DIR/.git" ]]; then
+    echo ""
+    git -C "$SCRIPT_DIR" status --short || true
+fi

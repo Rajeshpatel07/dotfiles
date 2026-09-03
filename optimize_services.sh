@@ -1,79 +1,87 @@
 #!/bin/bash
+set -euo pipefail
 
-# Define colors
-NAME_COLOR='\033[1;36m'   # Bold Cyan
-DESC_COLOR='\033[0;32m'   # Green
-EFFECT_COLOR='\033[0;33m' # Yellow
-PROMPT_COLOR='\033[1;35m' # Bold Magenta
-NC='\033[0m'              # No Color
+# ------------------------------------------------------------------------------
+# optimize_services — interactively disable unused Fedora services
+# Called from install.sh, or run standalone: ./optimize_services.sh
+# ------------------------------------------------------------------------------
 
-# Helper function to prompt and disable services
+if [[ -t 1 ]]; then
+    RESET='\033[0m'
+    BOLD='\033[1m'
+    DIM='\033[2m'
+    CYAN='\033[1;36m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    RED='\033[1;31m'
+    MAGENTA='\033[1;35m'
+else
+    RESET=''; BOLD=''; DIM=''; CYAN=''; GREEN=''; YELLOW=''; RED=''; MAGENTA=''
+fi
+
+ok()   { echo -e "  ${GREEN}✓${RESET} $1"; }
+warn() { echo -e "  ${YELLOW}!${RESET} $1"; }
+info() { echo -e "  ${DIM}→${RESET} $1"; }
+
+ask() {
+    local prompt="$1"
+    echo -ne "  ${MAGENTA}?${RESET} ${prompt} ${DIM}[y/N]${RESET} "
+    read -r reply || true
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
 manage_service() {
-    local service_name="$1"
-    local systemd_units="$2"
-    local description="$3"
-    local effects="$4"
+    local label="$1"
+    local units="$2"
+    local what="$3"
+    local effect="$4"
 
-    # Display formatted information
-    echo -e "${NAME_COLOR}[${service_name}]${NC}: ${DESC_COLOR}${description}${NC} ${EFFECT_COLOR}${effects}${NC}"
-    
-    # Prompt user
-    echo -ne "${PROMPT_COLOR}Press (y/n): ${NC}"
-    read -n 1 -r
-    echo -e "\n" # Move to next line after keypress
+    echo -e "${BOLD}${label}${RESET} ${DIM}—${RESET} ${what}"
+    echo -e "  ${DIM}${effect}${RESET}"
 
-    # Action if 'y' or 'Y' is pressed
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Stopping and disabling ${service_name}..."
-        for unit in $systemd_units; do
+    if ask "Disable ${label}?"; then
+        for unit in $units; do
             sudo systemctl stop "$unit" 2>/dev/null || true
             sudo systemctl disable "$unit" 2>/dev/null || true
         done
-        echo -e "Done.\n"
+        ok "disabled"
     else
-        echo -e "Skipped.\n"
+        echo -e "  ${DIM}— skipped${RESET}"
     fi
-    echo "----------------------------------------------------------------------"
+    echo ""
 }
 
-echo "======================================================================"
-echo "                   Fedora 44 Service Optimizer                        "
-echo "======================================================================"
-echo ""
+echo -e "${BOLD}Service optimizer${RESET}\n"
 
-# 1. SSSD
 manage_service \
     "sssd.service" \
     "sssd.service" \
-    "Manages remote enterprise network logins (like Active Directory)." \
-    "No effect for a personal laptop. Your local password and sudo will work perfectly."
+    "Enterprise login (Active Directory / LDAP)" \
+    "Safe to disable on a personal laptop. Local logins & sudo unaffected."
 
-# 2. ModemManager
 manage_service \
     "ModemManager.service" \
     "ModemManager.service" \
-    "Controls internal cellular network cards." \
-    "CRITICAL HARDWARE NOTE: If a physical SIM card slot is available on your laptop, you lose the ability to use it directly. Normal Wi-Fi and mobile phone Wi-Fi hotspots are completely unaffected."
+    "Cellular modem control (built-in WWAN / SIM slot)" \
+    "If you use a physical SIM slot, it will stop working. Wi-Fi & phone hotspots unaffected."
 
-# 3. CUPS (Printing)
 manage_service \
     "cups" \
     "cups.service cups.socket cups.path" \
-    "The Linux printing subsystem engine." \
-    "You will completely lose the ability to use or connect to physical and network printers."
+    "Printing subsystem" \
+    "Disabling removes all printer support (local & network)."
 
-# 4. ABRT (Bug Reporting)
 manage_service \
     "abrt" \
     "abrtd.service abrt-oops.service" \
-    "Fedora's automatic crash and bug reporting utility." \
-    "Crashed applications will close silently instead of creating massive diagnostic memory dumps or prompting you to file bugs."
+    "Automatic crash reporting & coredumps" \
+    "Crashes will close silently without bug-report prompts or large dumps."
 
-# 5. PCSCD (Smart Cards)
 manage_service \
     "pcscd" \
     "pcscd.service pcscd.socket" \
-    "Drivers for physical smart card readers." \
-    "CRITICAL HARDWARE NOTE: If you plug in a physical corporate Smart Card / ID Badge reader, it will stop working. Standard USB security keys (like a YubiKey for website logins) are unaffected."
+    "Smart-card reader daemon" \
+    "Corporate ID badge readers will stop. YubiKeys for WebAuthn/U2F unaffected."
 
-echo "Optimization complete! Any changes made will persist across reboots."
+echo -e "${GREEN}━━ ${BOLD}Done${RESET} ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+ok "Optimization complete"
