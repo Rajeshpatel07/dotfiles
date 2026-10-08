@@ -108,7 +108,7 @@ hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
-hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/scripts/screen.sh"))
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/scripts/toggle-display.sh"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("gnome-clocks"))
@@ -118,7 +118,7 @@ hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave-browser", { workspace = "2" })
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("yaak-app", { workspace = "4" }))
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("helium", { workspace = "2" }))
 
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("~/.config/hypr/scripts/relaunch-waybar.sh"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("~/.config/hypr/scripts/toggle-waybar.sh"))
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd("hyprlock"))
 
 -- Move Focus
